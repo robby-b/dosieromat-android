@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Dosieromat</string>
+    <string name="action_settings">Settings</string>
+    <string name="sendBtnText">Zubereiten!</string>
+</resources>
