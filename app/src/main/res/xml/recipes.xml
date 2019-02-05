@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<recipes>
     <!-- Source: https://www.martermuehle.de/blog/die-richtige-dosiermenge/ -->
     <recipe>
         <name>Kaffee</name>
@@ -10,7 +10,7 @@
                 <name>COFFEE</name>
                 <amount>60</amount>
                 <unit>Gram</unit>
-                <isAutoDispensible>true</isAutoDispensible>
+                <isAutoDispensable>true</isAutoDispensable>
             </ingredient>
         </ingredients>
     </recipe>
@@ -24,38 +24,38 @@
                 <name>FLOUR</name>
                 <amount>250</amount>
                 <unit>Gram</unit>
-                <isAutoDispensible>true</isAutoDispensible>
+                <isAutoDispensable>true</isAutoDispensable>
             </ingredient>
             <ingredient>
                 <name>BAKING_SODA</name>
                 <amount>1</amount>
                 <unit>Msp.</unit>
-                <isAutoDispensible>false</isAutoDispensible>
+                <isAutoDispensable>false</isAutoDispensable>
             </ingredient>
             <ingredient>
                 <name>SUGAR</name>
                 <amount>60</amount>
                 <unit>Gram</unit>
-                <isAutoDispensible>true</isAutoDispensible>
+                <isAutoDispensable>true</isAutoDispensable>
             </ingredient>
             <ingredient>
                 <name>SALT</name>
                 <amount>1</amount>
                 <unit>Pinch</unit>
-                <isAutoDispensible>false</isAutoDispensible>
+                <isAutoDispensable>false</isAutoDispensable>
             </ingredient>
             <ingredient>
                 <name>EGG_WHOLE</name>
                 <amount>1</amount>
-                <unit />
-                <isAutoDispensible>false</isAutoDispensible>
+                <unit>Item</unit>
+                <isAutoDispensable>false</isAutoDispensable>
             </ingredient>
             <ingredient>
                 <name>BUTTER_COLD</name>
                 <amount>125</amount>
                 <unit>Gram</unit>
-                <isAutoDispensible>false</isAutoDispensible>
+                <isAutoDispensable>false</isAutoDispensable>
             </ingredient>
         </ingredients>
     </recipe>
-</resources>
+</recipes>

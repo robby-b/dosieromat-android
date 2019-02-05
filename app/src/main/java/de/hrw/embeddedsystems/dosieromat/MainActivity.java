@@ -31,8 +31,12 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.xmlpull.v1.XmlPullParserException;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
 
 public class MainActivity extends AppCompatActivity {
     int amount = 1;
@@ -60,6 +64,19 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        List<Recipe> recipes;
+
+        try {
+            RecipeXmlParser xmlParser = new RecipeXmlParser(getResources().getXml(R.xml.recipes));
+            recipes = xmlParser.parseRecipeXml();
+            for (Recipe r : recipes) {
+                Log.d("RecipeList", r.toString());
+            }
+        }
+        catch (XmlPullParserException | IOException e) {
+            Log.d("RecipeList", Log.getStackTraceString(e));
+        }
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 

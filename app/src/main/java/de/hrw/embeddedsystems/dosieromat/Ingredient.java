@@ -1,5 +1,9 @@
 package de.hrw.embeddedsystems.dosieromat;
 
+import android.support.annotation.NonNull;
+
+import java.util.Locale;
+
 public class Ingredient {
     private String name;
     private int amount;
@@ -43,5 +47,11 @@ public class Ingredient {
 
     public void setAutoDispensed(boolean autoDispensed) {
         isAutoDispensed = autoDispensed;
+    }
+
+    @NonNull
+    @Override
+    public String toString() {
+        return String.format(Locale.GERMANY, "%1$d %2$s of %3$s. Dosieromat? %4$b", amount, unit, name, isAutoDispensed);
     }
 }
