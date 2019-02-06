@@ -119,7 +119,7 @@ public class MainActivity extends AppCompatActivity {
                     increaseAmount();
                     break;
                 case R.id.sendBtn:
-                    // TODO: Send coffee amount to ESP32
+                    mBtHandler.sendMessage("TEST_MESSAGE");
                     break;
                 case R.id.scanBtn:
                     mBtHandler.startScan();

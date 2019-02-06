@@ -4,6 +4,9 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
+import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
+import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothProfile;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
@@ -15,15 +18,19 @@ import android.os.Handler;
 import android.os.ParcelUuid;
 import android.util.Log;
 
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public class BtHandlerDosieromat {
-    private static final String SERVICE_UUID = "a964d61b-a5b3-4b5c-9e1e-65029b3d936d";
-    private static final String CHARACTERISTIC_UUID_RX = "9c731b8a-9088-48fe-8f8a-9bc071a3784b";
-    private static final String CHARACTERISTIC_UUID_TX = "8d0c925d-0f4a-4c4b-bfc3-758c89282220";
+    private static final UUID SERVICE_UUID = UUID.fromString("a964d61b-a5b3-4b5c-9e1e-65029b3d936d");
+    private static final UUID CHARACTERISTIC_UUID_RX =  UUID.fromString("9c731b8a-9088-48fe-8f8a-9bc071a3784b");
+    private static final UUID CHARACTERISTIC_UUID_TX =  UUID.fromString("8d0c925d-0f4a-4c4b-bfc3-758c89282220");
 
     private static final int REQUEST_ENABLE_BT = 1;
     private static final int REQUEST_FINE_LOCATION = 2;
@@ -41,6 +48,8 @@ public class BtHandlerDosieromat {
     private ScanCallback mScanCallback;
     private Handler mHandler;
 
+    private boolean mWriteInitalized;
+
     private BluetoothDevice mDosieromat;
 
     private BluetoothGatt mGatt;
@@ -56,7 +65,7 @@ public class BtHandlerDosieromat {
             return;
         }
 
-        List<ScanFilter> filters = Collections.singletonList(new ScanFilter.Builder().setServiceUuid(ParcelUuid.fromString(SERVICE_UUID)).build());
+        List<ScanFilter> filters = Collections.singletonList(new ScanFilter.Builder().setServiceUuid(new ParcelUuid(SERVICE_UUID)).build());
         ScanSettings settings = new ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_POWER).build();
 
         mScanResults = new HashMap<>();
@@ -85,6 +94,20 @@ public class BtHandlerDosieromat {
         Log.d(DEBUG_TAG, "Stopped scanning");
     }
 
+    public void sendMessage(String message) {
+        mWriteInitalized = true;
+        if(mConnected && mWriteInitalized) {
+            BluetoothGattService service = mGatt.getService(SERVICE_UUID);
+            BluetoothGattCharacteristic characteristicWrite = service.getCharacteristic(CHARACTERISTIC_UUID_RX);
+
+            byte[] messageBytes = new byte[0];
+            messageBytes = message.getBytes(StandardCharsets.UTF_8);
+            characteristicWrite.setValue(messageBytes);
+
+            boolean success = mGatt.writeCharacteristic(characteristicWrite);
+        }
+    }
+
     private void scanComplete() {
         if(!mScanResults.isEmpty()) {
             for (String deviceAddress : mScanResults.keySet()) {
@@ -103,14 +126,12 @@ public class BtHandlerDosieromat {
         mGatt = mDosieromat.connectGatt(mContext, false, gattClientCallback, BluetoothDevice.TRANSPORT_LE);
     }
 
-    public void setConnected(boolean connected) {
-        mConnected = connected;
-    }
-
     public void disconnectGattServer() {
         Log.d(DEBUG_TAG, "Closing Gatt connection");
 
         mConnected = false;
+        mWriteInitalized = false;
+
         if (mGatt != null) {
             mGatt.disconnect();
             mGatt.close();
@@ -168,7 +189,7 @@ public class BtHandlerDosieromat {
 
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 Log.d(DEBUG_TAG, "Connected to device " + gatt.getDevice().getAddress());
-                setConnected(true);
+                mConnected = true;
                 gatt.discoverServices();
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 Log.d(DEBUG_TAG, "Disconnected from device");
@@ -176,6 +197,48 @@ public class BtHandlerDosieromat {
             }
         }
 
+        @Override
+        public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+            super.onServicesDiscovered(gatt, status);
 
+            if(status != BluetoothGatt.GATT_SUCCESS) {
+                return;
+            }
+            BluetoothGattService service = gatt.getService(SERVICE_UUID);
+            BluetoothGattCharacteristic characteristicNotify = service.getCharacteristic(CHARACTERISTIC_UUID_TX);
+
+            //TODO: add error characteristic
+
+            gatt.setCharacteristicNotification(characteristicNotify, true);
+
+            BluetoothGattDescriptor desc = characteristicNotify.getDescriptors().get(0);
+            desc.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+            gatt.writeDescriptor(desc);
+
+            BluetoothGattCharacteristic characteristicWrite = service.getCharacteristic(CHARACTERISTIC_UUID_RX);
+            characteristicWrite.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
+            //mWriteInitalized = gatt.setCharacteristicNotification(characteristicWrite, true);
+        }
+
+        private void enableCharacteristicNotification(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+            boolean characteristicWriteSuccess = gatt.setCharacteristicNotification(characteristic, true);
+            if (characteristicWriteSuccess) {
+                Log.d(DEBUG_TAG, "Characteristic notification set successfully for " + characteristic.getUuid().toString());
+            } else {
+                Log.d(DEBUG_TAG, "Characteristic notification set failure for " + characteristic.getUuid().toString());
+            }
+        }
+
+        @Override
+        public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+            super.onCharacteristicChanged(gatt, characteristic);
+
+            byte[] messageBytes = characteristic.getValue();
+
+            String messageString;
+            messageString = new String(messageBytes, StandardCharsets.UTF_8);
+
+            Log.d(DEBUG_TAG, "Received message: " + messageString);
+        }
     }
 }
