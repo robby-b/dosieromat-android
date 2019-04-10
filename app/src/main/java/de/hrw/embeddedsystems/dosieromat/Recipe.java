@@ -43,8 +43,6 @@ public class Recipe {
         this.ingredients = ingredients;
     }
 
-
-
     @NonNull
     @Override
     public String toString() {
@@ -59,7 +57,21 @@ public class Recipe {
         }
 
         return sb.toString();
+    }
 
+    public List<String> toCommandList(int numOfPortions) {
+        List<String> commands = new ArrayList<>();
 
+        for (Ingredient i : ingredients) {
+            if(i.isAutoDispensed()) {
+                StringBuilder sb = new StringBuilder();
+                sb.append(i.getName());
+                sb.append(';');
+                sb.append(i.getAmount() * numOfPortions);
+                commands.add(sb.toString());
+            }
+        }
+
+        return commands;
     }
 }

@@ -13,10 +13,14 @@ import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
+
 import android.content.Context;
 import android.os.Handler;
 import android.os.ParcelUuid;
 import android.util.Log;
+import android.widget.TextView;
+
+import org.w3c.dom.Text;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
@@ -49,7 +53,7 @@ public class BtHandlerDosieromat {
     private Handler mHandler;
 
     private boolean mWriteInitalized;
-
+    private boolean writeFinished;
     private BluetoothDevice mDosieromat;
 
     private BluetoothGatt mGatt;
@@ -76,6 +80,7 @@ public class BtHandlerDosieromat {
         mHandler = new Handler();
         mHandler.postDelayed(this::stopScan, SCAN_PERIOD);
 
+
         mScanning = true;
         Log.d(DEBUG_TAG, "Started scanning");
     }
@@ -96,16 +101,29 @@ public class BtHandlerDosieromat {
 
     public void sendMessage(String message) {
         mWriteInitalized = true;
-        if(mConnected && mWriteInitalized) {
+
+
+        if (mConnected && mWriteInitalized) {
+            writeFinished = false;
             BluetoothGattService service = mGatt.getService(SERVICE_UUID);
             BluetoothGattCharacteristic characteristicWrite = service.getCharacteristic(CHARACTERISTIC_UUID_RX);
 
-            byte[] messageBytes = new byte[0];
+            byte[] messageBytes;
             messageBytes = message.getBytes(StandardCharsets.UTF_8);
             characteristicWrite.setValue(messageBytes);
 
             boolean success = mGatt.writeCharacteristic(characteristicWrite);
+
+//            while(!writeFinished) {
+//                try {
+//                    Thread.sleep(1);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+
         }
+
     }
 
     private void scanComplete() {
@@ -114,7 +132,13 @@ public class BtHandlerDosieromat {
                 Log.d(DEBUG_TAG, "Found device: " + deviceAddress + mScanResults.get(deviceAddress).getName());
                 mDosieromat = mScanResults.get(deviceAddress);
             }
+
+            connectToDosieromat();
+        } else {
+            startScan();
         }
+
+
     }
 
     public BluetoothDevice getDosieromat() {
@@ -124,6 +148,8 @@ public class BtHandlerDosieromat {
     public void connectToDosieromat() {
         GattClientCallback gattClientCallback = new GattClientCallback();
         mGatt = mDosieromat.connectGatt(mContext, false, gattClientCallback, BluetoothDevice.TRANSPORT_LE);
+
+
     }
 
     public void disconnectGattServer() {
@@ -136,6 +162,8 @@ public class BtHandlerDosieromat {
             mGatt.disconnect();
             mGatt.close();
         }
+
+        connectToDosieromat();
     }
 
     private class BtLeScanCallback extends ScanCallback {
@@ -189,7 +217,9 @@ public class BtHandlerDosieromat {
 
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 Log.d(DEBUG_TAG, "Connected to device " + gatt.getDevice().getAddress());
+
                 mConnected = true;
+
                 gatt.discoverServices();
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 Log.d(DEBUG_TAG, "Disconnected from device");
@@ -217,7 +247,7 @@ public class BtHandlerDosieromat {
 
             BluetoothGattCharacteristic characteristicWrite = service.getCharacteristic(CHARACTERISTIC_UUID_RX);
             characteristicWrite.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
-            //mWriteInitalized = gatt.setCharacteristicNotification(characteristicWrite, true);
+            mWriteInitalized = gatt.setCharacteristicNotification(characteristicWrite, true);
         }
 
         private void enableCharacteristicNotification(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
@@ -234,11 +264,26 @@ public class BtHandlerDosieromat {
             super.onCharacteristicChanged(gatt, characteristic);
 
             byte[] messageBytes = characteristic.getValue();
-
+            Log.d(DEBUG_TAG, "Received:");
             String messageString;
             messageString = new String(messageBytes, StandardCharsets.UTF_8);
+            if(messageString.startsWith("PROGRESS;")) {
+                int progressPercent = Integer.parseInt(messageString.split(";")[1]);
+                Log.d(DEBUG_TAG, "Progress: " + progressPercent);
+            }
 
             Log.d(DEBUG_TAG, "Received message: " + messageString);
+
+        }
+
+        @Override
+        public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+            super.onCharacteristicWrite(gatt, characteristic, status);
+
+            if(status == BluetoothGatt.GATT_SUCCESS) {
+                writeFinished = true;
+                Log.d(DEBUG_TAG, "sent message: " + characteristic.getStringValue(0));
+            }
         }
     }
 }

@@ -4,11 +4,11 @@
     <recipe>
         <name>Kaffee</name>
         <amount>1</amount>
-        <unit>Liter</unit>
+        <unit>Tasse</unit>
         <ingredients>
             <ingredient>
                 <name>COFFEE</name>
-                <amount>60</amount>
+                <amount>5</amount>
                 <unit>Gram</unit>
                 <isAutoDispensable>true</isAutoDispensable>
             </ingredient>
@@ -24,7 +24,7 @@
                 <name>FLOUR</name>
                 <amount>250</amount>
                 <unit>Gram</unit>
-                <isAutoDispensable>true</isAutoDispensable>
+                <isAutoDispensable>false</isAutoDispensable>
             </ingredient>
             <ingredient>
                 <name>BAKING_SODA</name>
@@ -36,7 +36,7 @@
                 <name>SUGAR</name>
                 <amount>60</amount>
                 <unit>Gram</unit>
-                <isAutoDispensable>true</isAutoDispensable>
+                <isAutoDispensable>false</isAutoDispensable>
             </ingredient>
             <ingredient>
                 <name>SALT</name>

@@ -36,19 +36,16 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
     int amount = 1;
 
-
     private static final String DOSIEROMAT_BT_NAME = "Dosieromat Proto";
 
     private static final int RQS_ENABLE_BLUETOOTH = 1;
     private static final int MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION = 20;
 
     private BtHandlerDosieromat mBtHandler;
-
+    private List<Recipe> recipes;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        List<Recipe> recipes;
-
         try {
             RecipeXmlParser xmlParser = new RecipeXmlParser(getResources().getXml(R.xml.recipes));
             recipes = xmlParser.parseRecipeXml();
@@ -66,8 +63,9 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.decreaseAmountBtn).setOnClickListener(onClickListener);
         findViewById(R.id.increaseAmountBtn).setOnClickListener(onClickListener);
         findViewById(R.id.sendBtn).setOnClickListener(onClickListener);
-        findViewById(R.id.scanBtn).setOnClickListener(onClickListener);
-        findViewById(R.id.connectBtn).setOnClickListener(onClickListener);
+//        findViewById(R.id.scanBtn).setOnClickListener(onClickListener);
+//        findViewById(R.id.connectBtn).setOnClickListener(onClickListener);
+
 
         updateAmountTxt();
         final BluetoothManager btManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
@@ -79,6 +77,8 @@ public class MainActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.ACCESS_COARSE_LOCATION},
                     MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION);
         }
+
+        mBtHandler.startScan();
     }
 
     @Override
@@ -100,13 +100,8 @@ public class MainActivity extends AppCompatActivity {
                 }
                 return;
             }
-
-            // other 'case' lines to check for other
-            // permissions this app might request.
         }
     }
-
-
 
     final View.OnClickListener onClickListener = new View.OnClickListener() {
         @Override
@@ -119,35 +114,26 @@ public class MainActivity extends AppCompatActivity {
                     increaseAmount();
                     break;
                 case R.id.sendBtn:
-                    mBtHandler.sendMessage("TEST_MESSAGE");
-                    break;
-                case R.id.scanBtn:
-                    mBtHandler.startScan();
-                    findViewById(R.id.connectBtn).setEnabled(true);
-                    break;
-                case R.id.connectBtn:
-                    mBtHandler.connectToDosieromat();
+                    // Hardcoded recipe number for coffee
+                    List<String> commands = recipes.get(0).toCommandList(amount);
+
+                    for (String c : commands) {
+                        mBtHandler.sendMessage(c);
+                    }
                     break;
             }
 
         }
     };
 
-    private void startScanTxt() {
-        TextView connectedTxt = findViewById(R.id.connectingTxt);
-        connectedTxt.setText("Scanning");
-    }
-
-
-
     private void updateAmountTxt() {
         TextView amountTxt = (TextView) findViewById(R.id.amountTxt);
 
         if (amount == 1) {
-            amountTxt.setText(amount + " Kanne");
+            amountTxt.setText(amount + " Tasse");
         }
         else if (amount > 0 && amount <= 8) {
-            amountTxt.setText(amount + " Kannen");
+            amountTxt.setText(amount + " Tassen");
         }
         else {
             amountTxt.setText("Error");
@@ -160,7 +146,7 @@ public class MainActivity extends AppCompatActivity {
             updateAmountTxt();
         }
         else {
-            Toast.makeText(getApplicationContext(), "Minimale Anzahl an Kannen erreicht!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), "Minimale Anzahl an Tassen erreicht!", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -170,7 +156,15 @@ public class MainActivity extends AppCompatActivity {
             updateAmountTxt();
         }
         else {
-            Toast.makeText(getApplicationContext(), "Maximale Anzahl an Kannen erreicht!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), "Maximale Anzahl an Tassen erreicht!", Toast.LENGTH_SHORT).show();
         }
     }
 }
+
+//                case R.id.scanBtn:
+//                        mBtHandler.startScan();
+//                        findViewById(R.id.connectBtn).setEnabled(true);
+//                        break;
+//                        case R.id.connectBtn:
+//                        mBtHandler.connectToDosieromat();
+//                        break;
