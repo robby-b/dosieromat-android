@@ -6,8 +6,11 @@ import org.xmlpull.v1.XmlPullParserException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.XMLFormatter;
 
+/*
+Ein XML-Parser um die Rezepte aus der recipes.xml Datei zu lesen
+Für eine einzelne Zutat wie im Prototypen natürlich überdimensioniert, aber für die Erweiterbarkeit wichtig
+ */
 public class RecipeXmlParser {
     private static final String ns = null;
     private XmlPullParser parser;
@@ -21,12 +24,7 @@ public class RecipeXmlParser {
     public List<Recipe> parseRecipeXml() throws XmlPullParserException, IOException {
         List<Recipe> recipes = new ArrayList<>();
 
-        Log.d("RecipeList", "Step 1");
-
         parser.require(XmlPullParser.START_TAG, ns, "recipes");
-
-        Log.d("RecipeList", "Step 2");
-
 
         while (parser.next() != XmlPullParser.END_TAG) {
             if (parser.getEventType() != XmlPullParser.START_TAG) {

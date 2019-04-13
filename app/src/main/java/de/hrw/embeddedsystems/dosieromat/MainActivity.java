@@ -5,18 +5,9 @@
 package de.hrw.embeddedsystems.dosieromat;
 
 import android.Manifest;
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
-import android.bluetooth.le.BluetoothLeScanner;
-import android.bluetooth.le.ScanCallback;
-import android.bluetooth.le.ScanFilter;
-import android.bluetooth.le.ScanResult;
-import android.bluetooth.le.ScanSettings;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.os.Handler;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -29,7 +20,6 @@ import android.widget.Toast;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -63,9 +53,6 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.decreaseAmountBtn).setOnClickListener(onClickListener);
         findViewById(R.id.increaseAmountBtn).setOnClickListener(onClickListener);
         findViewById(R.id.sendBtn).setOnClickListener(onClickListener);
-//        findViewById(R.id.scanBtn).setOnClickListener(onClickListener);
-//        findViewById(R.id.connectBtn).setOnClickListener(onClickListener);
-
 
         updateAmountTxt();
         final BluetoothManager btManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
@@ -78,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
                     MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION);
         }
 
-        mBtHandler.startScan();
+        mBtHandler.startScan(); // startet den Scan automatisch, ohne Benutzerinteraktion
     }
 
     @Override
@@ -89,9 +76,6 @@ public class MainActivity extends AppCompatActivity {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
-
                 } else {
                     Toast.makeText(this,
                             "no permission granted",
@@ -127,7 +111,7 @@ public class MainActivity extends AppCompatActivity {
     };
 
     private void updateAmountTxt() {
-        TextView amountTxt = (TextView) findViewById(R.id.amountTxt);
+        TextView amountTxt = findViewById(R.id.amountTxt);
 
         if (amount == 1) {
             amountTxt.setText(amount + " Tasse");
@@ -160,11 +144,3 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 }
-
-//                case R.id.scanBtn:
-//                        mBtHandler.startScan();
-//                        findViewById(R.id.connectBtn).setEnabled(true);
-//                        break;
-//                        case R.id.connectBtn:
-//                        mBtHandler.connectToDosieromat();
-//                        break;

@@ -18,12 +18,7 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.ParcelUuid;
 import android.util.Log;
-import android.widget.TextView;
 
-import org.w3c.dom.Text;
-
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
@@ -31,6 +26,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+/*
+Diese Klasse ist für alles bzgl. der BLE-Kommunikation zuständig
+ */
 public class BtHandlerDosieromat {
     private static final UUID SERVICE_UUID = UUID.fromString("a964d61b-a5b3-4b5c-9e1e-65029b3d936d");
     private static final UUID CHARACTERISTIC_UUID_RX =  UUID.fromString("9c731b8a-9088-48fe-8f8a-9bc071a3784b");
@@ -64,12 +62,13 @@ public class BtHandlerDosieromat {
         mContext = context;
     }
 
+    // Startet den Scan nach dem Mikrocontroller
     public void startScan() {
         if(mScanning) {
             return;
         }
 
-        List<ScanFilter> filters = Collections.singletonList(new ScanFilter.Builder().setServiceUuid(new ParcelUuid(SERVICE_UUID)).build());
+        List<ScanFilter> filters = Collections.singletonList(new ScanFilter.Builder().setServiceUuid(new ParcelUuid(SERVICE_UUID)).build()); // Filter sodass ausschließlich nach dem Dosieromaten gescannt wird
         ScanSettings settings = new ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_POWER).build();
 
         mScanResults = new HashMap<>();
@@ -99,9 +98,9 @@ public class BtHandlerDosieromat {
         Log.d(DEBUG_TAG, "Stopped scanning");
     }
 
+    // sendet eine Nachricht an den Mikrocontroller, genutzt zur Übertragung der Befehle
     public void sendMessage(String message) {
         mWriteInitalized = true;
-
 
         if (mConnected && mWriteInitalized) {
             writeFinished = false;
@@ -113,21 +112,13 @@ public class BtHandlerDosieromat {
             characteristicWrite.setValue(messageBytes);
 
             boolean success = mGatt.writeCharacteristic(characteristicWrite);
-
-//            while(!writeFinished) {
-//                try {
-//                    Thread.sleep(1);
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                }
-//            }
-
         }
-
     }
 
+    // Wird ausgeführt wenn der Scan abgeschlossen ist
     private void scanComplete() {
         if(!mScanResults.isEmpty()) {
+            // Da nur nach dem Mikrocontroller gesucht wird, wurde er hier gefunden
             for (String deviceAddress : mScanResults.keySet()) {
                 Log.d(DEBUG_TAG, "Found device: " + deviceAddress + mScanResults.get(deviceAddress).getName());
                 mDosieromat = mScanResults.get(deviceAddress);
@@ -135,10 +126,9 @@ public class BtHandlerDosieromat {
 
             connectToDosieromat();
         } else {
+            // Wenn der Mikrocontroller nicht gefunden wird, wird automatisch ein neuer scan gestartet
             startScan();
         }
-
-
     }
 
     public BluetoothDevice getDosieromat() {
@@ -148,8 +138,6 @@ public class BtHandlerDosieromat {
     public void connectToDosieromat() {
         GattClientCallback gattClientCallback = new GattClientCallback();
         mGatt = mDosieromat.connectGatt(mContext, false, gattClientCallback, BluetoothDevice.TRANSPORT_LE);
-
-
     }
 
     public void disconnectGattServer() {
@@ -166,6 +154,7 @@ public class BtHandlerDosieromat {
         connectToDosieromat();
     }
 
+    // Innere Klasse um die ScanCallbacks angepasst zu überschreiben
     private class BtLeScanCallback extends ScanCallback {
         private Map<String, BluetoothDevice> mScanResults;
 
@@ -198,6 +187,7 @@ public class BtHandlerDosieromat {
         }
     }
 
+    // Innere Klasse um die allgemeine BT Callbacks angepasst zu überschreiben
     private class GattClientCallback extends BluetoothGattCallback {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
@@ -237,8 +227,6 @@ public class BtHandlerDosieromat {
             BluetoothGattService service = gatt.getService(SERVICE_UUID);
             BluetoothGattCharacteristic characteristicNotify = service.getCharacteristic(CHARACTERISTIC_UUID_TX);
 
-            //TODO: add error characteristic
-
             gatt.setCharacteristicNotification(characteristicNotify, true);
 
             BluetoothGattDescriptor desc = characteristicNotify.getDescriptors().get(0);
@@ -273,7 +261,6 @@ public class BtHandlerDosieromat {
             }
 
             Log.d(DEBUG_TAG, "Received message: " + messageString);
-
         }
 
         @Override

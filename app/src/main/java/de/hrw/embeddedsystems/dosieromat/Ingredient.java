@@ -4,16 +4,18 @@ import android.support.annotation.NonNull;
 
 import java.util.Locale;
 
+/*
+Klasse die eine einzelne Zutat in einem Rezept dastellt
+
+ */
 public class Ingredient {
-    private String name;
-    private int amount;
-    private String unit;
-    private boolean isAutoDispensed;
+    private String name; // Name der Zutat
+    private int amount; // Menge der Zutat in Gramm
+    private boolean isAutoDispensed; // Ob die Zutat von einem Dosieromaten automatisch dosiert werden kann oder manuell hinzugegeben werden muss
 
     public Ingredient(String name, int amount, String unit, boolean isAutoDispensed) {
         this.name = name;
         this.amount = amount;
-        this.unit = unit;
         this.isAutoDispensed = isAutoDispensed;
     }
 
@@ -33,14 +35,6 @@ public class Ingredient {
         this.amount = amount;
     }
 
-    public String getUnit() {
-        return unit;
-    }
-
-    public void setUnit(String unit) {
-        this.unit = unit;
-    }
-
     public boolean isAutoDispensed() {
         return isAutoDispensed;
     }
@@ -52,6 +46,6 @@ public class Ingredient {
     @NonNull
     @Override
     public String toString() {
-        return String.format(Locale.GERMANY, "%1$d %2$s of %3$s. Dosieromat? %4$b", amount, unit, name, isAutoDispensed);
+        return String.format(Locale.GERMANY, "%1$d grams of %3$s. Dosieromat? %4$b", amount, name, isAutoDispensed);
     }
 }
